@@ -1,0 +1,81 @@
+# ملفات النظام
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ملفات السجلات والتتبع
+*.log
+tracker_logs.json
+hacker_data.txt
+logs/
+data/
+
+# ملفات البيئة والإعدادات
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config.php
+config.json
+config.ini
+
+# ملفات IDE ومحررات الكود
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ملفات مؤقتة
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ملفات التبعيات والمكتبات
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ملفات نظام التشغيل
+ehthumbs.db
+Icon?
+*.lnk
+
+# ملفات النسخ الاحتياطي
+*.bak
+*.backup
+*.old
+
+# ملفات الوسائط (لئلا ترفع صور أو فيديو عن طريق الخطأ)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.mp3
+*.avi
+*.mov
+
+# ملفات الأرشيف
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# ملفات نظام Git
+.git/
+.gitattributes
+.gitmodules
+
+# ملفات الأخطاء
+error_log
+php_error.log
+
+# ملفات النظام المحددة لهذا المشروع
+secret_keys.txt
+private_data/
+credentials/
