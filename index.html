@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>تم الاختراق — تجربة رعب</title>
+<style>
+/* صفحة رعب بصري واحدة — مُنقحة لتعمل على GitHub Pages */
+:root{
+  --bg-color: #000000;
+  --blood: #6b0000;
+  --blood-bright: #c40000;
+  --flicker-speed: 250ms;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  padding:0;
+  background: radial-gradient(circle at 50% 40%, #0b0b0b 0%, #000 30%), #000;
+  color:#fff;
+  font-family: "Montserrat", "Arial", sans-serif;
+  overflow:hidden;
+}
+
+/* الحاوية الأساسية */
+.app{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  perspective:1200px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Canvas layers */
+canvas{
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+/* نص مركزي مع طبقات للتأثير */
+.title-wrap{
+  position:relative;
+  z-index:20;
+  transform-style:preserve-3d;
+  text-align:center;
+  width:100%;
+  pointer-events:none;
+}
+.title{
+  display:inline-block;
+  font-weight:900;
+  font-size:12vmin;
+  line-height:0.9;
+  color:var(--blood-bright);
+  text-transform:uppercase;
+  letter-spacing:0.6vmin;
+  padding:0.4em 0.8em;
+  background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.1));
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 10px 30px rgba(0,0,0,0.8)) drop-shadow(0 0 24px rgba(196,0,0,0.06));
+  mix-blend-mode:screen;
+  position:relative;
+}
+.title-shadow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) translateZ(-100px) scale(1.02);
+  font-weight:900;
+  font-size:12vmin;
+  line-height:0.9;
+  color:#000;
+  filter:blur(12px) opacity(0.5);
+  z-index:10;
+}
+.title-copy{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-weight:900;
+  font-size:12vmin;
+  line-height:0.9;
+  mix-blend-mode:screen;
+  pointer-events:none;
+  z-index:21;
+}
+.title-bleed{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-weight:900;
+  font-size:12vmin;
+  line-height:0.9;
+  color:var(--blood);
+  z-index:19;
+  filter:blur(1px);
+}
+
+/* flicker & noise */
+.flicker{
+  position:absolute;
+  z-index:5;
+  inset:0;
+  pointer-events:none;
+  mix-blend-mode:screen;
+  opacity:0.18;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255,40,40,0.06), transparent 8%),
+    radial-gradient(circle at 20% 90%, rgba(255,10,10,0.02), transparent 12%);
+  transition:opacity var(--flicker-speed) linear;
+}
+.noise{
+  position:absolute;
+  z-index:50;
+  inset:0;
+  pointer-events:none;
+  mix-blend-mode:overlay;
+  opacity:0.06;
+  background-image:linear-gradient(transparent 50%, rgba(255,255,255,0.02) 50%);
+  background-size:100% 2px;
+}
+
+/* responsive */
+@media (max-width:600px){
+  .title{font-size:16vmin; letter-spacing:0.4vmin}
+  .title-copy,.title-bleed{font-size:16vmin}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <canvas id="fogCanvas"></canvas>
+  <canvas id="bloodCanvas"></canvas>
+  <canvas id="overlayCanvas"></canvas>
+
+  <div class="flicker" id="flickerLayer"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div class="title-wrap" aria-hidden="true">
+    <div class="title-shadow">تم الاختراق</div>
+    <div class="title-bleed">تم الاختراق</div>
+    <div class="title-copy" id="copyR">تم الاختراق</div>
+    <div class="title-copy" id="copyB">تم الاختراق</div>
+    <div class="title" id="mainTitle">تم الاختراق</div>
+  </div>
+</div>
+
+<script>
+/* نظيف ومحمّل تلقائياً — يحمي من أخطاء DOM لو عناصر غير موجودة */
+const fogCanvas = document.getElementById('fogCanvas');
+const bloodCanvas = document.getElementById('bloodCanvas');
+const overlayCanvas = document.getElementById('overlayCanvas');
+const flickerLayer = document.getElementById('flickerLayer');
+const mainTitle = document.getElementById('mainTitle');
+const copyR = document.getElementById('copyR');
+const copyB = document.getElementById('copyB');
+
+let w=0, h=0;
+const fogCtx = fogCanvas.getContext?.('2d');
+const bloodCtx = bloodCanvas.getContext?.('2d');
+const overlayCtx = overlayCanvas.getContext?.('2d');
+
+function resize(){
+  w = window.innerWidth; h = window.innerHeight;
+  [fogCanvas, bloodCanvas, overlayCanvas].forEach(c=>{
+    if(!c) return;
+    c.width = w * (window.devicePixelRatio || 1);
+    c.height = h * (window.devicePixelRatio || 1);
+    c.style.width = w + 'px';
+    c.style.height = h + 'px';
+    const ctx = c.getContext('2d');
+    if(ctx) ctx.setTransform(window.devicePixelRatio || 1,0,0,window.devicePixelRatio || 1,0,0);
+  });
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ---------------- FOG ---------------- */
+const fogParticles = [];
+class FogParticle {
+  constructor(){ this.reset(); }
+  reset(){
+    this.x = Math.random()*w;
+    this.y = Math.random()*h;
+    this.r = 60 + Math.random()*220;
+    this.alpha = 0.02 + Math.random()*0.08;
+    this.speedX = (Math.random()-0.5)*0.15;
+    this.speedY = -0.02 - Math.random()*0.12;
+  }
+  step(dt){
+    this.x += this.speedX * dt;
+    this.y += this.speedY * dt * 0.6;
+    if(this.y + this.r < -50 || this.x < -200 || this.x > w + 200) this.reset();
+  }
+  draw(ctx){
+    if(!ctx) return;
+    const g = ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+    g.addColorStop(0, `rgba(40,10,10,${this.alpha})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(this.x - this.r, this.y - this.r, this.r*2, this.r*2);
+  }
+}
+for(let i=0;i<24;i++) fogParticles.push(new FogParticle());
+
+/* ---------------- BLOOD ---------------- */
+const bloodParticles = [];
+const splats = [];
+
+class BloodDrop {
+  constructor(x,y,vx,vy,size,color){
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.size = size; this.color = color || '#8b0000';
+    this.life = 0; this.maxLife = 4 + Math.random()*4; this.angle = Math.random()*Math.PI*2; this.splatted = false;
+  }
+  step(dt){
+    this.vy += 0.0025 * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.vx *= 0.999; this.vy *= 0.999;
+    this.angle += 0.02 * dt;
+    this.life += dt * 0.001;
+    // simple floor collision to create splat
+    if(!this.splatted && this.y > h - (h*0.06) && this.vy > 0.6){
+      this.splatted = true;
+      createSplat(this.x, h - h*0.04, Math.min(this.size*1.8, 90), this.color);
+    }
+  }
+  draw(ctx){
+    if(!ctx) return;
+    const s = Math.max(1, this.size);
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(Math.sin(this.angle) * 0.18);
+    const grd = ctx.createRadialGradient(-s*0.2, -s*0.2, s*0.1, 0,0,s);
+    grd.addColorStop(0, 'rgba(255,120,120,0.98)');
+    grd.addColorStop(0.25, 'rgba(196,0,0,0.95)');
+    grd.addColorStop(1, 'rgba(60,0,0,0.6)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.ellipse(0,0,s,s*1.35,0,0,Math.PI*2);
+    ctx.fill();
+    // tail
+    ctx.beginPath();
+    ctx.moveTo(0, s*0.9);
+    ctx.bezierCurveTo(-s*0.6, s*1.6, -s*0.4, s*2.4, -s*0.2, s*3.2);
+    ctx.lineWidth = Math.max(1, s*0.22);
+    ctx.strokeStyle = 'rgba(110,0,0,0.6)';
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function createSplat(x,y,r,color){
+  splats.push({x,y,r,color,age:0,fade:1});
+}
+
+function spawnBlood(x,y,amount=3,spread=1){
+  for(let i=0;i<amount;i++){
+    const ang = (Math.random()-0.5)*Math.PI*2;
+    const speed = 0.2 + Math.random()*1.8;
+    const vx = Math.cos(ang)*speed*(spread||1);
+    const vy = Math.sin(ang)*speed*(spread||1) - (0.3 + Math.random()*1.0);
+    const size = 6 + Math.random()*22;
+    const c = Math.random()>0.6? '#c40000' : '#8b0000';
+    bloodParticles.push(new BloodDrop(x,y,vx,vy,size,c));
+  }
+}
+
+function stepBlood(dt){
+  for(let i=bloodParticles.length-1;i>=0;i--){
+    const p = bloodParticles[i];
+    p.step(dt);
+    if(p.y > h + 200 || p.life > p.maxLife*1.4) bloodParticles.splice(i,1);
+  }
+  for(let i=splats.length-1;i>=0;i--){
+    const s = splats[i];
+    s.age += dt*0.001;
+    s.fade = Math.max(0, 1 - s.age/6);
+    if(s.fade <= 0) splats.splice(i,1);
+  }
+}
+
+function drawBlood(ctx){
+  if(!ctx) return;
+  ctx.clearRect(0,0,w,h);
+  // draw splats
+  for(const s of splats){
+    ctx.save();
+    const grd = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r);
+    grd.addColorStop(0, 'rgba(180,0,0,' + (0.8*s.fade) + ')');
+    grd.addColorStop(0.6, 'rgba(80,0,0,' + (0.45*s.fade) + ')');
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.ellipse(s.x, s.y, s.r*0.9, s.r*0.5, 0,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 0.6 * s.fade;
+    ctx.strokeStyle = 'rgba(80,0,0,' + (0.5*s.fade) + ')';
+    ctx.lineWidth = Math.max(1, s.r*0.06);
+    for(let i=0;i<6;i++){
+      ctx.beginPath();
+      ctx.moveTo(s.x + (Math.random()-0.5)*s.r*0.3, s.y + s.r*0.1);
+      ctx.lineTo(s.x + (Math.random()-0.5)*s.r*1.6, s.y + s.r*(0.6 + Math.random()*1.6));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // draw drops
+  for(const p of bloodParticles) p.draw(ctx);
+}
+
+/* ------------- Overlay / glitch -------------- */
+function drawOverlay(ctx){
+  if(!ctx) return;
+  ctx.clearRect(0,0,w,h);
+  ctx.globalAlpha = 0.02;
+  ctx.fillStyle = '#fff';
+  for(let y=0;y<h;y+=2) ctx.fillRect(0,y,w,1);
+  ctx.globalAlpha = 1.0;
+  if(Math.random() < 0.02){
+    const count = 2 + Math.floor(Math.random()*6);
+    for(let i=0;i<count;i++){
+      const y = Math.random()*h; const hgt = 6 + Math.random()*40;
+      ctx.fillStyle = `rgba(255,0,0,${0.02+Math.random()*0.06})`;
+      ctx.fillRect(0,y,w,hgt);
+    }
+  }
+}
+
+/* ------------- main loop -------------- */
+let last = performance.now();
+let glitchIntensity = 0;
+function updateTitleGlitch(time){
+  glitchIntensity *= 0.99;
+  const t = time * 0.001;
+  if(copyR) copyR.style.transform = `translate(-50%,-50%) translateX(${Math.sin(t*20)*glitchIntensity*6}px) translateY(${Math.cos(t*11)*glitchIntensity*2}px)`;
+  if(copyB) copyB.style.transform = `translate(-50%,-50%) translateX(${Math.cos(t*17)*glitchIntensity*8}px) translateY(${Math.sin(t*9)*glitchIntensity*3}px)`;
+  if(copyR) copyR.style.color = `rgba(196,0,0,${0.2 + glitchIntensity*0.6})`;
+  if(copyB) copyB.style.color = `rgba(80,160,255,${0.12 + glitchIntensity*0.45})`;
+  const flick = 0.15 + Math.abs(Math.sin(t*6))*0.25 + glitchIntensity*0.6;
+  if(flickerLayer) flickerLayer.style.opacity = 0.08 + flick*0.5;
+
+  if(Math.random() < 0.01 + glitchIntensity*0.05){
+    const rect = mainTitle.getBoundingClientRect();
+    const x = rect.left + rect.width*(0.3 + Math.random()*0.4);
+    const y = rect.bottom - 6 + Math.random()*6;
+    spawnBlood(x,y,1 + Math.floor(Math.random()*3), 0.6 + glitchIntensity*1.5);
+  }
+}
+
+function loop(now){
+  const dt = Math.min(40, now - last);
+  last = now;
+  // fog
+  if(fogCtx) { fogCtx.clearRect(0,0,w,h); for(const p of fogParticles){ p.step(dt*0.06); p.draw(fogCtx); } }
+  // blood
+  if(bloodCtx) { stepBlood(dt*0.06); drawBlood(bloodCtx); }
+  // overlay
+  if(overlayCtx) drawOverlay(overlayCtx);
+  // incidental drips
+  if(Math.random() < 0.003) spawnBlood(Math.random()*w, -10, 1, 0.3);
+  // title glitch
+  updateTitleGlitch(now);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ------------- auto explosion + escalation -------------- */
+function triggerGlitch(amount){ glitchIntensity = Math.min(1.8, glitchIntensity + (amount || 0.6)); }
+
+function initialExplosion(){
+  const cx = w * 0.5, cy = h * 0.44;
+  for(let i=0;i<160;i++){
+    spawnBlood(cx + (Math.random()-0.5)*240, cy + (Math.random()-0.5)*120, 1, 1.6);
+  }
+  triggerGlitch(1.4);
+  escalateContinuous();
+}
+
+function escalateContinuous(){
+  let level = 0;
+  const esc = setInterval(()=>{
+    level++;
+    const bursts = 1 + Math.floor(level/2);
+    for(let b=0;b<bursts;b++){
+      spawnBlood(Math.random()*w, -10 + Math.random()*h*0.2, 1 + Math.floor(Math.random()*3)+Math.floor(level/3), 0.8 + level*0.08);
+    }
+    triggerGlitch(0.2 + Math.random()*0.5);
+    if(level>40) clearInterval(esc);
+  }, 700);
+}
+
+setTimeout(()=>{ initialExplosion(); }, 600);
+
+/* ------------- audio (optional, may be blocked until user interaction) -------------- */
+function AudioEngine(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  const ac = new AC();
+  const master = ac.createGain(); master.gain.value = 0.55; master.connect(ac.destination);
+
+  function createNoise(duration){
+    const rate = ac.sampleRate; const len = Math.floor(duration * rate);
+    const buf = ac.createBuffer(1,len,rate); const data = buf.getChannelData(0);
+    for(let i=0;i<len;i++) data[i] = (Math.random()*2-1)*0.25;
+    return buf;
+  }
+  const noise = ac.createBufferSource(); noise.buffer = createNoise(3.2); noise.loop = true;
+  const filt = ac.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=220;
+  noise.connect(filt);
+  const noiseG = ac.createGain(); noiseG.gain.value = 0.18; filt.connect(noiseG); noiseG.connect(master); noise.start();
+
+  const sub = ac.createOscillator(); sub.type='sine'; sub.frequency.value = 40;
+  const subG = ac.createGain(); subG.gain.value = 0.0; sub.connect(subG); subG.connect(master); sub.start();
+
+  const tone = ac.createOscillator(); tone.type='sawtooth'; tone.frequency.value = 220;
+  const toneG = ac.createGain(); toneG.gain.value = 0.0; tone.connect(toneG); toneG.connect(master); tone.start();
+
+  function heartbeat(intensity){
+    intensity = Math.min(1.2, Math.max(0, intensity||0.6));
+    const now = ac.currentTime;
+    subG.gain.cancelScheduledValues(now);
+    subG.gain.setValueAtTime(0, now);
+    subG.gain.linearRampToValueAtTime(0.45*intensity, now+0.02);
+    subG.gain.exponentialRampToValueAtTime(0.001, now+0.36);
+    toneG.gain.cancelScheduledValues(now);
+    toneG.gain.setValueAtTime(0, now);
+    toneG.gain.linearRampToValueAtTime(0.05*intensity, now+0.03);
+    toneG.gain.exponentialRampToValueAtTime(0.001, now+0.28);
+  }
+
+  let pulseTimer = null;
+  function startPulse(rate){
+    function loopPulse(){
+      heartbeat(0.8 + Math.random()*0.4);
+      pulseTimer = setTimeout(loopPulse, Math.max(240, rate + Math.random()*rate*0.6));
+    }
+    loopPulse();
+  }
+  function stopPulse(){ if(pulseTimer) clearTimeout(pulseTimer); }
+
+  return {
+    heartbeat, startPulse, stopPulse,
+    setVol(v){ master.gain.value = v; },
+    panic(){ noiseG.gain.cancelScheduledValues(ac.currentTime); noiseG.gain.linearRampToValueAtTime(0.9, ac.currentTime+0.15); tone.frequency.exponentialRampToValueAtTime(420, ac.currentTime+0.5); startPulse(360); },
+    calm(){ noiseG.gain.linearRampToValueAtTime(0.18, ac.currentTime+0.6); stopPulse(); }
+  };
+}
+let audioEngine = null;
+try{ audioEngine = AudioEngine(); if(audioEngine && audioEngine.startPulse) audioEngine.startPulse(800); }catch(e){ console.warn('Audio not available', e); }
+
+/* allow click/tap to intensify */
+let lastTap = 0;
+window.addEventListener('pointerdown', (e)=>{
+  const now = Date.now();
+  spawnBlood(e.clientX, e.clientY, 6, 1.2);
+  triggerGlitch(0.9);
+  if(audioEngine && audioEngine.heartbeat) audioEngine.heartbeat(0.9);
+  if(now - lastTap < 350){
+    // panic on double-tap
+    for(let i=0;i<80;i++) spawnBlood(Math.random()*w, Math.random()*h*0.8, 1, 1.6);
+    if(audioEngine && audioEngine.panic) audioEngine.panic();
+    setTimeout(()=>{ if(audioEngine && audioEngine.calm) audioEngine.calm(); }, 8000);
+  }
+  lastTap = now;
+});
+
+/* small automatic drips from text */
+setInterval(()=>{
+  if(Math.random() < 0.2){
+    const rect = mainTitle.getBoundingClientRect();
+    const x = rect.left + rect.width*(0.2 + Math.random()*0.6);
+    spawnBlood(x, rect.bottom - 8, 1 + Math.floor(Math.random()*3), 0.7);
+    if(Math.random() < 0.25) triggerGlitch(0.25);
+  }
+}, 900);
+
+/* floating fragments (decor) */
+(function fragments(){
+  for(let i=0;i<10;i++){
+    const f = document.createElement('div');
+    f.style.position = 'absolute';
+    f.style.width = (12 * Math.random()) + 'vmin';
+    f.style.height = (1.5 + Math.random()*1.5) + 'vmin';
+    f.style.left = (Math.random()*80+5) + '%';
+    f.style.top = (Math.random()*80+5) + '%';
+    f.style.background = 'linear-gradient(90deg,#3b0000,#c40000)';
+    f.style.opacity = (0.02 + Math.random()*0.12).toString();
+    f.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(f);
+  }
+})();
+
+/* awal: small delay then focus explosion */
+setTimeout(()=>{ initialExplosion(); }, 600);
+
+/* ensure page measured correctly on load */
+window.addEventListener('load', resize);
+</script>
+</body>
+  </html>
